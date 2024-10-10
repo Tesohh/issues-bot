@@ -1,0 +1,9 @@
+__pycache__/
+old/
+.vscode/
+*.html
+*.php
+**/.env
+.cache/
+.data/
+.DS_STORE
