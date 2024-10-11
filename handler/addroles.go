@@ -4,7 +4,6 @@ import (
 	"issues/db"
 	"issues/global"
 	"issues/slash"
-	"log/slog"
 
 	dg "github.com/bwmarrin/discordgo"
 )
@@ -48,27 +47,21 @@ var defaultRoles = []*dg.RoleParams{
 	},
 }
 
-func AddRoles(s *dg.Session, g *dg.GuildCreate) {
-	isNew, err := RegisterGuild(s, g)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-
-	if !isNew {
-		return
-	}
-
+func AddRoles(s *dg.Session, g *dg.GuildCreate) error {
 	for i, role := range defaultRoles {
 		r, err := s.GuildRoleCreate(g.ID, role)
 		if err != nil {
-			slog.Error(err.Error())
+			return err
 		}
 
 		var roletype = db.RoleTypeKind
 		if i > 3 {
 			roletype = db.RoleTypePriority
 		}
-		global.DB.Create(&db.Role{ID: r.ID, RoleType: roletype, GuildId: g.ID})
+		err = global.DB.Create(&db.Role{ID: r.ID, RoleType: roletype, GuildId: g.ID}).Error
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }

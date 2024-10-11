@@ -16,8 +16,7 @@ func Connect() (*gorm.DB, error) {
 	}
 
 	// Migrate the schemas
-	db.AutoMigrate(&Guild{})
-	db.AutoMigrate(&Role{})
+	db.AutoMigrate(&Guild{}, &Role{}, &Project{}, &Issue{})
 
 	return db, nil
 }

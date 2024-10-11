@@ -54,7 +54,8 @@ func main() {
 	}
 
 	session.AddHandler(executeCommandHandler)
-	session.AddHandler(handler.AddRoles)
+	session.AddHandler(handler.GuildJoinHandler)
+	session.AddHandler(handler.ReadMessage)
 
 	defer session.Close()
 
