@@ -42,12 +42,20 @@ var defaultRoles = []*dg.RoleParams{
 }
 
 func AddRoles(s *dg.Session, g *dg.GuildCreate) {
-	slog.Info("joined guild.")
-	slog.Warn("no roles will be created as we still can't check if we are in a new guild") // TEMP:
-	// for _, role := range defaultRoles {
-	// 	_, err := s.GuildRoleCreate(g.ID, role)
-	// 	if err != nil {
-	// 		slog.Error(err.Error())
-	// 	}
-	// }
+	isNew, err := RegisterGuild(s, g)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+
+	if !isNew {
+		return
+	}
+
+	for _, role := range defaultRoles {
+		_, err := s.GuildRoleCreate(g.ID, role)
+		if err != nil {
+			slog.Error(err.Error())
+		}
+	}
 }
