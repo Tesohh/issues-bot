@@ -7,7 +7,7 @@ type Project struct {
 	RepoLink string
 
 	CategoryChannelID string
-	IssueChannelID    string
+	IssueChannelID    string `gorm:"size:3"`
 	GuildID           string
 
 	Issues []Issue
