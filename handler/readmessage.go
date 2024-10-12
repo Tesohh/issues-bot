@@ -9,6 +9,7 @@ import (
 )
 
 var roleMentionRegex = regexp.MustCompile(`<@&([0-9]+)>`)
+var channelMentionRegex = regexp.MustCompile(`<#([0-9]+)>`)
 var userMentionRegex = regexp.MustCompile(`<@([0-9]+)>`)
 
 func ReadMessage(s *dg.Session, m *dg.MessageCreate) {
@@ -27,6 +28,12 @@ func ReadMessage(s *dg.Session, m *dg.MessageCreate) {
 		roleIDs = append(roleIDs, match[1])
 	}
 
+	channelMatches := channelMentionRegex.FindAllStringSubmatch(str, -1)
+	channelIDs := make([]string, 0)
+	for _, match := range channelMatches {
+		channelIDs = append(channelIDs, match[1])
+	}
+
 	userMatches := userMentionRegex.FindAllStringSubmatch(str, -1)
 	userIDs := make([]string, 0)
 	for _, match := range userMatches {
@@ -34,8 +41,9 @@ func ReadMessage(s *dg.Session, m *dg.MessageCreate) {
 	}
 
 	str = roleMentionRegex.ReplaceAllString(str, "")
+	str = channelMentionRegex.ReplaceAllString(str, "")
 	str = userMentionRegex.ReplaceAllString(str, "")
 	str = strings.Trim(str, " ")
 
-	slog.Info("received message:", "roleIDs", roleIDs, "userIDs", userIDs, "str", str)
+	slog.Info("received message:", "roleIDs", roleIDs, "channelIDs", channelIDs, "userIDs", userIDs, "str", str)
 }

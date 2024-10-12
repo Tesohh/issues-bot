@@ -3,9 +3,11 @@ package db
 type Project struct {
 	ID       string `gorm:"primarykey"`
 	Name     string
+	Prefix   string
 	RepoLink string
 
-	GuildID string
+	IssueChannelID string
+	GuildID        string
 
 	Issues []Issue
 }
