@@ -8,7 +8,12 @@ import (
 	dg "github.com/bwmarrin/discordgo"
 )
 
-var defaultRoles = []*dg.RoleParams{
+var kindRoles = []*dg.RoleParams{
+	{
+		Name:        "GENERIC",
+		Color:       slash.Ptr(0xfffffc),
+		Mentionable: slash.Ptr(true),
+	},
 	{
 		Name:        "FEATURE",
 		Color:       slash.Ptr(0x00afb9),
@@ -29,9 +34,10 @@ var defaultRoles = []*dg.RoleParams{
 		Color:       slash.Ptr(0xda627d),
 		Mentionable: slash.Ptr(true),
 	},
-
+}
+var priorityRoles = []*dg.RoleParams{
 	{
-		Name:        "CHILL",
+		Name:        "LOW",
 		Color:       slash.Ptr(0x0077b6),
 		Mentionable: slash.Ptr(true),
 	},
@@ -47,21 +53,52 @@ var defaultRoles = []*dg.RoleParams{
 	},
 }
 
-func AddRoles(s *dg.Session, g *dg.GuildCreate) error {
-	for i, role := range defaultRoles {
-		r, err := s.GuildRoleCreate(g.ID, role)
-		if err != nil {
-			return err
-		}
+func addRole(s *dg.Session, g *dg.GuildCreate, role *dg.RoleParams, roleType db.RoleType) (db.Role, error) {
+	r, err := s.GuildRoleCreate(g.ID, role)
+	if err != nil {
+		return db.Role{}, err
+	}
 
-		var roletype = db.RoleTypeKind
-		if i > 3 {
-			roletype = db.RoleTypePriority
-		}
-		err = global.DB.Create(&db.Role{ID: r.ID, RoleType: roletype, GuildId: g.ID}).Error
+	dbrole := db.Role{ID: r.ID, RoleType: roleType, GuildId: g.ID}
+	result := global.DB.Create(&dbrole)
+	return dbrole, result.Error
+}
+
+func AddRoles(s *dg.Session, g *dg.GuildCreate) error {
+	var defaultKindRole db.Role
+	for i, role := range kindRoles {
+		r, err := addRole(s, g, role, db.RoleTypeKind)
 		if err != nil {
 			return err
+		}
+		if i == 0 {
+			defaultKindRole = r
 		}
 	}
-	return nil
+
+	result := global.DB.
+		Table("guilds").
+		Where("id = ?", g.ID).
+		Updates(db.Guild{DefaultKindRoleID: defaultKindRole.ID})
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	var defaultPriorityRole db.Role
+	for i, role := range priorityRoles {
+		r, err := addRole(s, g, role, db.RoleTypePriority)
+		if err != nil {
+			return err
+		}
+		if i == 0 {
+			defaultPriorityRole = r
+		}
+	}
+	result = global.DB.
+		Table("guilds").
+		Where("id = ?", g.ID).
+		Updates(db.Guild{DefaultPriorityRoleID: defaultPriorityRole.ID})
+
+	return result.Error
 }

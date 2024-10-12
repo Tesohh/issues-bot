@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"issues/command"
 	"issues/slash"
 	"log"
 	"os"
@@ -9,7 +10,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var commands = map[string]*slash.Command{}
+var commands = map[string]*slash.Command{
+	"ping":        &command.Ping,
+	"removeroles": &command.RemoveRoles,
+}
 var registeredCommands = make([]*discordgo.ApplicationCommand, 0)
 
 func registerCommands(session *discordgo.Session) error {
@@ -23,6 +27,8 @@ func registerCommands(session *discordgo.Session) error {
 		}
 		registeredCommands = append(registeredCommands, cmd)
 	}
+
+	log.Println("Added commands")
 
 	return nil
 }

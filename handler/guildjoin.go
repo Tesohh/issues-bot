@@ -7,6 +7,7 @@ import (
 )
 
 func GuildJoinHandler(s *dg.Session, g *dg.GuildCreate) {
+	slog.Info("checking guild..")
 	isNew, err := RegisterGuild(s, g)
 	if err != nil {
 		slog.Error(err.Error())

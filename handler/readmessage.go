@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 
@@ -13,6 +13,9 @@ var userMentionRegex = regexp.MustCompile(`<@([0-9]+)>`)
 
 func ReadMessage(s *dg.Session, m *dg.MessageCreate) {
 	str := m.Content
+	if len(str) == 0 {
+		return
+	}
 	if str[0] != '-' {
 		return
 	}
@@ -34,5 +37,5 @@ func ReadMessage(s *dg.Session, m *dg.MessageCreate) {
 	str = userMentionRegex.ReplaceAllString(str, "")
 	str = strings.Trim(str, " ")
 
-	fmt.Println(roleIDs, userIDs, str)
+	slog.Info("received message:", "roleIDs", roleIDs, "userIDs", userIDs, "str", str)
 }

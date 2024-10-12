@@ -1,7 +1,7 @@
 package command
 
 import (
-	"alumix-ceo/slash"
+	"issues/slash"
 
 	"github.com/bwmarrin/discordgo"
 )

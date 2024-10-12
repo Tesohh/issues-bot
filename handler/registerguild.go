@@ -10,6 +10,7 @@ import (
 
 // note this is not a handler, this is for AddRoles
 func RegisterGuild(s *dg.Session, g *dg.GuildCreate) (bool, error) {
+	slog.Info("checking guild..")
 	guild := db.Guild{ID: g.ID}
 	result := global.DB.FirstOrCreate(&guild, guild)
 

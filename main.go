@@ -47,15 +47,17 @@ func main() {
 		return
 	}
 
+	slog.Info("adding handlers...")
+
+	session.AddHandler(handler.GuildJoinHandler)
+	session.AddHandler(handler.ReadMessage)
+	session.AddHandler(executeCommandHandler)
+
 	err = registerCommands(session)
 	if err != nil {
 		slog.Error(err.Error())
 		return
 	}
-
-	session.AddHandler(executeCommandHandler)
-	session.AddHandler(handler.GuildJoinHandler)
-	session.AddHandler(handler.ReadMessage)
 
 	defer session.Close()
 
