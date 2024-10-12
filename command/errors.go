@@ -3,5 +3,5 @@ package command
 import "fmt"
 
 var (
-	ErrRestaurantNotExistant = fmt.Errorf("Restaurant not found")
+	ErrProjectAlreadyExists = fmt.Errorf("you already have a project with that prefix")
 )

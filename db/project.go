@@ -6,8 +6,9 @@ type Project struct {
 	Prefix   string
 	RepoLink string
 
-	IssueChannelID string
-	GuildID        string
+	CategoryChannelID string
+	IssueChannelID    string
+	GuildID           string
 
 	Issues []Issue
 }
