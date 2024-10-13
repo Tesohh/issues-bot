@@ -1,1 +1,2 @@
 - [ ] Use gorm and sqlite to manage db
+- [ ] Listen for ThreadDelete events and update db accordingly

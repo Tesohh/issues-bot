@@ -45,5 +45,15 @@ func ReadMessage(s *dg.Session, m *dg.MessageCreate) {
 	str = userMentionRegex.ReplaceAllString(str, "")
 	str = strings.Trim(str, " ")
 
+	splits := strings.Split(str, "\n")
+	title := splits[0]
+	description := strings.Join(splits[1:], "\n")
+
 	slog.Info("received message:", "roleIDs", roleIDs, "channelIDs", channelIDs, "userIDs", userIDs, "str", str)
+	err := AddIssue(s, m, roleIDs, channelIDs, userIDs, title, description)
+	if err != nil {
+		slog.Error(err.Error())
+		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Reference())
+		return
+	}
 }
