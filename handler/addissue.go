@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: split this function more
 func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs []string, title, desc string) error {
 	// get current channel/thread
 	currentChannel, err := s.Channel(m.ChannelID)
@@ -100,7 +101,14 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	if err != nil {
 		return err
 	}
+
 	err = s.ChannelMessagePin(thread.ID, embedMsg.ID)
+	if err != nil {
+		return err
+	}
+
+	// notify mentioned channels
+	err = NotifyMentionedChannels(s, m, thread.ID, channelIDs)
 	if err != nil {
 		return err
 	}

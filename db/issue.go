@@ -6,7 +6,7 @@ type Issue struct {
 	Description string
 	AssigneeIDs string // comma separated ids
 
-	ThreadID string
+	ThreadID string `gorm:"column:thread_id"`
 
 	Roles []Role `gorm:"many2many:issue_roles;"`
 

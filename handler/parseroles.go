@@ -15,6 +15,16 @@ func ParseAssignees(authorID string, userIDs []string) []string {
 	return userIDs
 }
 
+func ParseIssuesFromChannels(channelIDs []string) ([]db.Issue, error) {
+	issues := []db.Issue{}
+	result := global.DB.Find("id in ?", channelIDs).Find(&issues)
+	// if result.Error != nil {
+	// 	return nil, result.Error
+	// }
+
+	return issues, result.Error
+}
+
 func ParseRoles(s *dg.Session, guildID string, roleIDs []string) (*db.Role, *db.Role, error) {
 	var guild db.Guild
 	result := global.DB.

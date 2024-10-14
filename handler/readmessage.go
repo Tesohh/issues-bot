@@ -41,7 +41,7 @@ func ReadMessage(s *dg.Session, m *dg.MessageCreate) {
 	}
 
 	str = roleMentionRegex.ReplaceAllString(str, "")
-	str = channelMentionRegex.ReplaceAllString(str, "")
+	// str = channelMentionRegex.ReplaceAllString(str, "") # dont remove channels...
 	str = userMentionRegex.ReplaceAllString(str, "")
 	str = strings.Trim(str, " ")
 
