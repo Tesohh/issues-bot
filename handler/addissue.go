@@ -58,11 +58,14 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 		Description: desc,
 		AssigneeIDs: "", // TODO:
 		ThreadID:    thread.ID,
-		Roles:       []db.Role{},
+		Roles:       []db.Role{*kindRole, *priorityRole}, // TODO:
 		ProjectID:   project.ID,
 	}
-	_ = issue
-	// TODO: add to DB
+
+	result = global.DB.Table("issues").Create(&issue)
+	if result.Error != nil {
+		return result.Error
+	}
 
 	embed := dg.MessageEmbed{
 		Title: threadName,
