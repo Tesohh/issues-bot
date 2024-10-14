@@ -51,14 +51,15 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	if err != nil {
 		return err
 	}
+	assignees := ParseAssignees(m.Author.ID, userIDs)
 
 	issue := db.Issue{
 		ID:          issueID,
 		Title:       title,
 		Description: desc,
-		AssigneeIDs: "", // TODO:
+		AssigneeIDs: strings.Join(assignees, ","),
 		ThreadID:    thread.ID,
-		Roles:       []db.Role{*kindRole, *priorityRole}, // TODO:
+		Roles:       []db.Role{*kindRole, *priorityRole},
 		ProjectID:   project.ID,
 	}
 
@@ -67,27 +68,29 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 		return result.Error
 	}
 
+	var roleMentions []string
+	for _, id := range assignees {
+		mention := fmt.Sprintf("<@%s>", id)
+		roleMentions = append(roleMentions, mention)
+	}
+
 	embed := dg.MessageEmbed{
 		Title: threadName,
 		Description: fmt.Sprintf(`
             **Kind**: <@&%s>
             **Priority**: <@&%s>
             **Recruiter**: <@%s>
-            **Assignee**: <@%s>
+            **Assignee(s)**: %s 
 
             %s
-            `, kindRole.ID, priorityRole.ID, m.Author.ID, m.Author.ID, desc), // TODO: get assignee
+            `, kindRole.ID, priorityRole.ID, m.Author.ID, strings.Join(roleMentions, ", "), desc),
 		Color: slash.EmbedColor,
 	}
 
-	var mentions []string
-	for _, id := range append(userIDs, m.Author.ID) {
-		mention := fmt.Sprintf("<@%s>", id)
-		mentions = append(mentions, mention)
-	}
+	roleMentions = append(roleMentions, fmt.Sprintf("<@%s>", m.Author.ID))
 
 	// temporarily mention users to make the thread show up
-	deleteMeMsg, err := s.ChannelMessageSend(thread.ID, strings.Join(mentions, ""))
+	deleteMeMsg, err := s.ChannelMessageSend(thread.ID, strings.Join(roleMentions, ""))
 	if err != nil {
 		return err
 	}

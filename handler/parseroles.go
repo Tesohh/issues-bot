@@ -8,6 +8,13 @@ import (
 	dg "github.com/bwmarrin/discordgo"
 )
 
+func ParseAssignees(authorID string, userIDs []string) []string {
+	if len(userIDs) == 0 {
+		return []string{authorID}
+	}
+	return userIDs
+}
+
 func ParseRoles(s *dg.Session, guildID string, roleIDs []string) (*db.Role, *db.Role, error) {
 	var guild db.Guild
 	result := global.DB.
