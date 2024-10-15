@@ -17,6 +17,6 @@ var Ping = slash.Command{
 			Description: "pinhg",
 		}
 
-		return slash.ReplyWithEmbed(s, i, embed)
+		return slash.ReplyWithEmbed(s, i, embed, false)
 	},
 }

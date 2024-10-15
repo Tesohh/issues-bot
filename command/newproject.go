@@ -74,6 +74,6 @@ var NewProject = slash.Command{
 		return slash.ReplyWithEmbed(s, i, dg.MessageEmbed{
 			Title:       fmt.Sprintf("Project %s created", name),
 			Description: fmt.Sprintf("Check out <#%s>", issuesChannel.ID),
-		})
+		}, false)
 	},
 }

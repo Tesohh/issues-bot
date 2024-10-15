@@ -19,7 +19,7 @@ var executeCommandHandler = func(s *discordgo.Session, i *discordgo.InteractionC
 			slash.ReplyWithEmbed(s, i.Interaction, discordgo.MessageEmbed{
 				Title:       "Error",
 				Description: err.Error(),
-			})
+			}, true)
 		}
 	}
 }

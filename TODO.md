@@ -1,8 +1,10 @@
-- [ ] Use gorm and sqlite to manage db
+- [x] Use gorm and sqlite to manage db
+- [x] Mark as done
+- [x] Icons to represent issue state
 - [ ] Listen for ThreadDelete events and update db accordingly
-- [ ] Mark as done
 - [ ] If the thread name changes, change the issue name
 - [ ] Change assignees with a slash command
 - [ ] Delete/edit project
-- [ ] Icons to represent issue state
+- [ ] CLeanup addissue.go
 - [ ] Read channel mentions from regular messages too
+- [ ] keep threads always unarchived with the threadupdate event

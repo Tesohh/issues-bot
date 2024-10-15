@@ -14,6 +14,7 @@ var commands = map[string]*slash.Command{
 	"ping":        &command.Ping,
 	"removeroles": &command.RemoveRoles,
 	"newproject":  &command.NewProject,
+	"mark":        &command.Mark,
 }
 var registeredCommands = make([]*discordgo.ApplicationCommand, 0)
 

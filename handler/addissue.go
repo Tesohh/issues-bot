@@ -41,7 +41,7 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	global.DB.Table("issues").Where("project_id = ?", project.ID).Count(&count)
 
 	issueID := fmt.Sprintf("#%s-%d", project.Prefix, count+1)
-	threadName := fmt.Sprintf("%s %s", issueID, title)
+	threadName := fmt.Sprintf("%s %s %s", issueID, db.IssueStatusIcons[0], title)
 	thread, err := s.ThreadStart(ch.ID, threadName, dg.ChannelTypeGuildPublicThread, 10080)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	}
 
 	embed := dg.MessageEmbed{
-		Title: threadName,
+		Title: fmt.Sprintf("%s %s", issueID, issue.Title),
 		Description: fmt.Sprintf(`
             **Kind**: <@&%s>
             **Priority**: <@&%s>
