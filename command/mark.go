@@ -28,6 +28,7 @@ var Mark = slash.Command{
 		var archive = false
 		var notifyAssignees = false
 		var lock = false
+		var autoArchiveDuration = 10080
 		switch subcommand {
 		case "todo":
 			issueStatus = db.IssueStatusTodo
@@ -37,11 +38,13 @@ var Mark = slash.Command{
 			issueStatus = db.IssueStatusDone
 			archive = true
 			notifyAssignees = true
+			autoArchiveDuration = 60
 		case "cancelled":
 			issueStatus = db.IssueStatusCanceled
 			archive = true
 			notifyAssignees = true
 			lock = true
+			autoArchiveDuration = 60
 		}
 
 		// get issue from current channel id
@@ -71,9 +74,10 @@ var Mark = slash.Command{
 
 		// change thread name
 		_, err = s.ChannelEdit(issue.ThreadID, &dg.ChannelEdit{
-			Name:     issue.ThreadName(),
-			Archived: &archive,
-			Locked:   &lock,
+			Name:                issue.ThreadName(),
+			AutoArchiveDuration: autoArchiveDuration,
+			Archived:            &archive,
+			Locked:              &lock,
 		})
 		if err != nil {
 			return err
@@ -91,8 +95,13 @@ var Mark = slash.Command{
 		}
 
 		// and finally send the embed
+		var alsoWillArchiveString string
+		if archive {
+			alsoWillArchiveString = ", thread will be archived in 1 hour if inactive"
+		}
+
 		embed := dg.MessageEmbed{
-			Title: fmt.Sprintf("Marked as %s", db.IssueStatusNames[issueStatus]),
+			Title: fmt.Sprintf("Marked as %s%s", db.IssueStatusNames[issueStatus], alsoWillArchiveString),
 			Color: db.IssueStatusColors[issueStatus],
 		}
 

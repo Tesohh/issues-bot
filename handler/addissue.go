@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO: split this function more
 func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs []string, title, desc string) error {
 	// get current channel/thread
 	currentChannel, err := s.Channel(m.ChannelID)
@@ -69,11 +68,7 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 		return result.Error
 	}
 
-	var roleMentions []string
-	for _, id := range assignees {
-		mention := fmt.Sprintf("<@%s>", id)
-		roleMentions = append(roleMentions, mention)
-	}
+	userMentions := slash.MentionMany(assignees, "@", ", ")
 
 	embed := dg.MessageEmbed{
 		Title: fmt.Sprintf("%s %s", issueID, issue.Title),
@@ -84,14 +79,14 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
             **Assignee(s)**: %s 
 
             %s
-            `, kindRole.ID, priorityRole.ID, m.Author.ID, strings.Join(roleMentions, ", "), desc),
+            `, kindRole.ID, priorityRole.ID, m.Author.ID, userMentions, desc),
 		Color: slash.EmbedColor,
 	}
 
-	roleMentions = append(roleMentions, fmt.Sprintf("<@%s>", m.Author.ID))
+	userMentions += fmt.Sprintf("<@%s>", m.Author.ID)
 
 	// temporarily mention users to make the thread show up
-	deleteMeMsg, err := s.ChannelMessageSend(thread.ID, strings.Join(roleMentions, ""))
+	deleteMeMsg, err := s.ChannelMessageSend(thread.ID, userMentions)
 	if err != nil {
 		return err
 	}
