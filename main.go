@@ -52,6 +52,7 @@ func main() {
 
 	session.AddHandler(handler.GuildJoinHandler)
 	session.AddHandler(handler.ReadMessage)
+	session.AddHandler(handler.ThreadUpdate)
 	session.AddHandler(executeCommandHandler)
 
 	err = registerCommands(session)

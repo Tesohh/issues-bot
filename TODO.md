@@ -7,4 +7,4 @@
 - [ ] Delete/edit project
 - [ ] CLeanup addissue.go
 - [ ] Read channel mentions from regular messages too
-- [ ] keep threads always unarchived with the threadupdate event
+- [x] keep threads always unarchived with the threadupdate event
