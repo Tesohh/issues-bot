@@ -6,12 +6,13 @@
 - [x] Icons to represent issue state
 - [x] keep threads always unarchived with the threadupdate event
 
-# Flexibility
+# Commands
 
 - [ ] Change assignees with a slash command
-  - [ ] Register embed_message_id in the issues tabloe
+  - [x] Register embed_message_id in the issues tabloe
 - [ ] Register new roles
 - [ ] Delete/edit project
+  - [ ] Move to `project subcommand` structure
 
 # Refactoring
 
