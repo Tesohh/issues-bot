@@ -22,7 +22,8 @@ type Issue struct {
 	AssigneeIDs string // comma separated ids
 	IssueStatus uint8
 
-	ThreadID string `gorm:"column:thread_id"`
+	ThreadID  string `gorm:"column:thread_id"`
+	MessageID string `gorm:"column:message_id"` // the message that contains the embed
 
 	Roles []Role `gorm:"many2many:issue_roles;"`
 

@@ -63,11 +63,6 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 		ProjectID:   project.ID,
 	}
 
-	result = global.DB.Table("issues").Create(&issue)
-	if result.Error != nil {
-		return result.Error
-	}
-
 	userMentions := slash.MentionMany(assignees, "@", ", ")
 
 	embed := dg.MessageEmbed{
@@ -96,10 +91,17 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	if err != nil {
 		return err
 	}
+	issue.MessageID = embedMsg.ID
 
 	err = s.ChannelMessagePin(thread.ID, embedMsg.ID)
 	if err != nil {
 		return err
+	}
+
+	// add to db
+	result = global.DB.Table("issues").Create(&issue)
+	if result.Error != nil {
+		return result.Error
 	}
 
 	// notify mentioned channels
