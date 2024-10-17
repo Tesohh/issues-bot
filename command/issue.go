@@ -5,6 +5,8 @@ import (
 	"issues/db"
 	"issues/global"
 	"issues/slash"
+	"slices"
+	"strings"
 
 	dg "github.com/bwmarrin/discordgo"
 )
@@ -113,6 +115,20 @@ var Issue = slash.Command{
 			editResultString = fmt.Sprintf("%s to <@&%s>", subcommand.Name, newRole.ID)
 
 		case "assign":
+			user := options["person"].UserValue(s)
+
+			assigneeIDs := strings.Split(issue.AssigneeIDs, ",")
+			if !slices.Contains(assigneeIDs, user.ID) { // need to add assignee
+				issue.AssigneeIDs += "," + user.ID
+				editResultString = fmt.Sprintf("assignees and added <@%s>", user.ID)
+			} else { // need to remove assignee
+				assigneeIDs = slices.DeleteFunc(assigneeIDs, func(id string) bool {
+					return id == user.ID
+				})
+				issue.AssigneeIDs = strings.Join(assigneeIDs, ",")
+				editResultString = fmt.Sprintf("assignees and removed <@%s>", user.ID)
+			}
+
 		case "rename":
 			issue.Title = options["name"].StringValue()
 			_, err = s.ChannelEdit(issue.ThreadID, &dg.ChannelEdit{
