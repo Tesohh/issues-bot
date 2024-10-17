@@ -24,7 +24,7 @@ var Issue = slash.Command{
 				Options: []*dg.ApplicationCommandOption{
 					{
 						Type:        dg.ApplicationCommandOptionRole,
-						Name:        "kind",
+						Name:        "role",
 						Description: "the kind role",
 						Required:    true,
 					},
@@ -37,7 +37,7 @@ var Issue = slash.Command{
 				Options: []*dg.ApplicationCommandOption{
 					{
 						Type:        dg.ApplicationCommandOptionRole,
-						Name:        "priority",
+						Name:        "role",
 						Description: "the priority role",
 						Required:    true,
 					},
@@ -72,12 +72,12 @@ var Issue = slash.Command{
 		},
 	},
 	Func: func(s *dg.Session, i *dg.Interaction) error {
-		subcommand := i.ApplicationCommandData().Options[0].Name
-		options := slash.GetOptionMap(i)
+		subcommand := i.ApplicationCommandData().Options[0]
+		options := slash.GetOptionMapRaw(subcommand.Options)
 
 		// get issue from current channel id
 		var issue db.Issue
-		err := global.DB.Find(&issue, "thread_id = ?", i.ChannelID).Error
+		err := global.DB.Preload("Roles").Find(&issue, "thread_id = ?", i.ChannelID).Error
 		if err != nil {
 			return err
 		}
@@ -88,9 +88,9 @@ var Issue = slash.Command{
 
 		var editResultString string
 
-		switch subcommand {
+		switch subcommand.Name {
 		case "kind", "priority":
-			discordRole := options[subcommand].RoleValue(s, i.GuildID)
+			discordRole := options["role"].RoleValue(s, i.GuildID)
 
 			var newRole db.Role
 			err = global.DB.Table("roles").Where("id = ?", discordRole.ID).Find(&newRole).Error
@@ -99,9 +99,9 @@ var Issue = slash.Command{
 			} // no need to check if it's empty on the db, the check role.Roletype != expectedRoleType check already does it
 
 			var expectedRoleType db.RoleType
-			if subcommand == "kind" {
+			if subcommand.Name == "kind" {
 				expectedRoleType = db.RoleTypeKind
-			} else if subcommand == "priority" {
+			} else if subcommand.Name == "priority" {
 				expectedRoleType = db.RoleTypePriority
 			}
 
@@ -110,16 +110,17 @@ var Issue = slash.Command{
 			}
 
 			for i, role := range issue.Roles {
+				fmt.Println(issue.Roles[i], expectedRoleType, newRole)
 				if role.RoleType == expectedRoleType {
 					issue.Roles[i] = newRole
 				}
 			}
 
-			err = global.DB.Save(issue).Error
+			err = global.DB.Save(&issue).Error
 			if err != nil {
 				return err
 			}
-			editResultString = fmt.Sprintf("%s to <@&%s>", subcommand, newRole.ID)
+			editResultString = fmt.Sprintf("%s to <@&%s>", subcommand.Name, newRole.ID)
 
 		case "assign":
 		case "rename":
@@ -127,14 +128,19 @@ var Issue = slash.Command{
 
 		if issue.MessageID == "" {
 			editResultString += "\ni was unable to edit the original message for this issue, changes still applied"
+		} else {
+			_, err = s.ChannelMessageEditEmbed(issue.ThreadID, issue.MessageID, issue.Embed())
+			if err != nil {
+				return err
+			}
 		}
 
-		_, _ = s.ChannelMessageSend(issue.ThreadID, fmt.Sprintf("<@%s> changed %s", i.User.ID, editResultString))
-
-		_, err = s.ChannelMessageEditEmbed(issue.ThreadID, issue.MessageID, issue.Embed())
-		if err != nil {
-			return err
-		}
+		_ = s.InteractionRespond(i, &dg.InteractionResponse{
+			Type: dg.InteractionResponseChannelMessageWithSource,
+			Data: &dg.InteractionResponseData{
+				Content: fmt.Sprintf("<@%s> changed %s", i.Member.User.ID, editResultString),
+			},
+		})
 
 		return nil
 	},
