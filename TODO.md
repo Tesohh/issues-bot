@@ -13,10 +13,13 @@
 - [ ] Register new roles
 - [ ] Delete/edit project
   - [ ] Move to `project subcommand` structure
+- [ ] `list issues` which shows in current project
+- [ ] `list projects` which also shows completeness
 
 # Refactoring
 
 - [ ] CLeanup addissue.go
+- [ ] Move to Issue.KindRole and Issue.PriorityRole
 
 # Reactivity
 

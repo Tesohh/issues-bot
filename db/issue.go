@@ -30,7 +30,11 @@ type Issue struct {
 	ThreadID  string `gorm:"column:thread_id"`
 	MessageID string `gorm:"column:message_id"` // the message that contains the embed
 
-	Roles []Role `gorm:"many2many:issue_roles;"` // note: should always be [kind, priority].
+	KindRoleID     string
+	KindRole       Role
+	PriorityRoleID string
+	PriorityRole   Role
+	// Roles []Role `gorm:"many2many:issue_roles;"` // note: should always be [kind, priority].
 
 	ProjectID string
 }
@@ -57,7 +61,7 @@ func (i *Issue) Embed() *dg.MessageEmbed {
             **Assignee(s)**: %s 
 
             %s
-            `, i.Roles[0].ID, i.Roles[1].ID, i.RecruiterID, mentions, i.Description),
+            `, i.KindRole.ID, i.PriorityRole.ID, i.RecruiterID, mentions, i.Description),
 		Color: slash.EmbedColor,
 	}
 }

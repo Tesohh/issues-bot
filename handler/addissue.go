@@ -54,14 +54,15 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	assignees := ParseAssignees(m.Author.ID, userIDs)
 
 	issue := db.Issue{
-		ID:          issueID,
-		Title:       title,
-		Description: desc,
-		RecruiterID: m.Author.ID,
-		AssigneeIDs: strings.Join(assignees, ","),
-		ThreadID:    thread.ID,
-		Roles:       []db.Role{*kindRole, *priorityRole},
-		ProjectID:   project.ID,
+		ID:           issueID,
+		Title:        title,
+		Description:  desc,
+		RecruiterID:  m.Author.ID,
+		AssigneeIDs:  strings.Join(assignees, ","),
+		ThreadID:     thread.ID,
+		KindRole:     *kindRole,
+		PriorityRole: *priorityRole,
+		ProjectID:    project.ID,
 	}
 
 	embed := issue.Embed()

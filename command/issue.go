@@ -77,7 +77,7 @@ var Issue = slash.Command{
 
 		// get issue from current channel id
 		var issue db.Issue
-		err := global.DB.Preload("Roles").Find(&issue, "thread_id = ?", i.ChannelID).Error
+		err := global.DB.Preload("KindRole").Preload("PriorityRole").Find(&issue, "thread_id = ?", i.ChannelID).Error
 		if err != nil {
 			return err
 		}
@@ -98,22 +98,16 @@ var Issue = slash.Command{
 				return err
 			} // no need to check if it's empty on the db, the check role.Roletype != expectedRoleType check already does it
 
-			var expectedRoleType db.RoleType
 			if subcommand.Name == "kind" {
-				expectedRoleType = db.RoleTypeKind
-			} else if subcommand.Name == "priority" {
-				expectedRoleType = db.RoleTypePriority
-			}
-
-			if newRole.RoleType != expectedRoleType {
-				return ErrRoleIsNotValid
-			}
-
-			for i, role := range issue.Roles {
-				fmt.Println(issue.Roles[i], expectedRoleType, newRole)
-				if role.RoleType == expectedRoleType {
-					issue.Roles[i] = newRole
+				if newRole.RoleType != db.RoleTypeKind {
+					return ErrRoleIsNotValid
 				}
+				issue.KindRole = newRole
+			} else if subcommand.Name == "priority" {
+				if newRole.RoleType != db.RoleTypePriority {
+					return ErrRoleIsNotValid
+				}
+				issue.PriorityRole = newRole
 			}
 
 			err = global.DB.Save(&issue).Error
