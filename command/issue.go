@@ -110,14 +110,23 @@ var Issue = slash.Command{
 				issue.PriorityRole = newRole
 			}
 
-			err = global.DB.Save(&issue).Error
-			if err != nil {
-				return err
-			}
 			editResultString = fmt.Sprintf("%s to <@&%s>", subcommand.Name, newRole.ID)
 
 		case "assign":
 		case "rename":
+			issue.Title = options["name"].StringValue()
+			_, err = s.ChannelEdit(issue.ThreadID, &dg.ChannelEdit{
+				Name: issue.ThreadName(),
+			})
+			if err != nil {
+				return err
+			}
+			editResultString = fmt.Sprintf("the name to %s", issue.Title)
+		}
+
+		err = global.DB.Save(&issue).Error
+		if err != nil {
+			return err
 		}
 
 		if issue.MessageID == "" {
