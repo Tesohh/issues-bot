@@ -10,7 +10,7 @@
 
 - [x] Change assignees with a slash command
   - [x] Register embed_message_id in the issues tabloe
-- [ ] Register new roles
+- [x] Register new roles
 - [ ] Delete/edit project
   - [ ] Move to `project subcommand` structure
 - [ ] `list issues` which shows in current project
@@ -19,9 +19,9 @@
 # Refactoring
 
 - [ ] CLeanup addissue.go
-- [ ] Move to Issue.KindRole and Issue.PriorityRole
+- [x] Move to Issue.KindRole and Issue.PriorityRole
 
-# Reactivity
+# Automation
 
 - [ ] Read channel mentions from regular messages too
 - [ ] Listen for ThreadDelete events and update db accordingly
