@@ -8,7 +8,7 @@
 
 # Commands
 
-- [ ] Change assignees with a slash command
+- [x] Change assignees with a slash command
   - [x] Register embed_message_id in the issues tabloe
 - [ ] Register new roles
 - [ ] Delete/edit project
