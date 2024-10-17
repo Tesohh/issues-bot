@@ -57,28 +57,16 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 		ID:          issueID,
 		Title:       title,
 		Description: desc,
+		RecruiterID: m.Author.ID,
 		AssigneeIDs: strings.Join(assignees, ","),
 		ThreadID:    thread.ID,
 		Roles:       []db.Role{*kindRole, *priorityRole},
 		ProjectID:   project.ID,
 	}
 
-	userMentions := slash.MentionMany(assignees, "@", ", ")
+	embed := issue.Embed()
 
-	embed := dg.MessageEmbed{
-		Title: fmt.Sprintf("%s %s", issueID, issue.Title),
-		Description: fmt.Sprintf(`
-            **Kind**: <@&%s>
-            **Priority**: <@&%s>
-            **Recruiter**: <@%s>
-            **Assignee(s)**: %s 
-
-            %s
-            `, kindRole.ID, priorityRole.ID, m.Author.ID, userMentions, desc),
-		Color: slash.EmbedColor,
-	}
-
-	userMentions += fmt.Sprintf("<@%s>", m.Author.ID)
+	userMentions := slash.MentionMany(append(assignees, m.Author.ID), "@", ", ")
 
 	// temporarily mention users to make the thread show up
 	deleteMeMsg, err := s.ChannelMessageSend(thread.ID, userMentions)
@@ -87,7 +75,7 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	}
 	_ = s.ChannelMessageDelete(thread.ID, deleteMeMsg.ID)
 
-	embedMsg, err := s.ChannelMessageSendEmbed(thread.ID, &embed)
+	embedMsg, err := s.ChannelMessageSendEmbed(thread.ID, embed)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,9 @@
 package command
 
 import (
+	"fmt"
+	"issues/db"
+	"issues/global"
 	"issues/slash"
 
 	dg "github.com/bwmarrin/discordgo"
@@ -70,11 +73,67 @@ var Issue = slash.Command{
 	},
 	Func: func(s *dg.Session, i *dg.Interaction) error {
 		subcommand := i.ApplicationCommandData().Options[0].Name
+		options := slash.GetOptionMap(i)
+
+		// get issue from current channel id
+		var issue db.Issue
+		err := global.DB.Find(&issue, "thread_id = ?", i.ChannelID).Error
+		if err != nil {
+			return err
+		}
+
+		if issue.ID == "" {
+			return ErrNotInIssue
+		}
+
+		var editResultString string
+
 		switch subcommand {
-		case "kind":
-		case "priority":
+		case "kind", "priority":
+			discordRole := options[subcommand].RoleValue(s, i.GuildID)
+
+			var newRole db.Role
+			err = global.DB.Table("roles").Where("id = ?", discordRole.ID).Find(&newRole).Error
+			if err != nil {
+				return err
+			} // no need to check if it's empty on the db, the check role.Roletype != expectedRoleType check already does it
+
+			var expectedRoleType db.RoleType
+			if subcommand == "kind" {
+				expectedRoleType = db.RoleTypeKind
+			} else if subcommand == "priority" {
+				expectedRoleType = db.RoleTypePriority
+			}
+
+			if newRole.RoleType != expectedRoleType {
+				return ErrRoleIsNotValid
+			}
+
+			for i, role := range issue.Roles {
+				if role.RoleType == expectedRoleType {
+					issue.Roles[i] = newRole
+				}
+			}
+
+			err = global.DB.Save(issue).Error
+			if err != nil {
+				return err
+			}
+			editResultString = fmt.Sprintf("%s to <@&%s>", subcommand, newRole.ID)
+
 		case "assign":
 		case "rename":
+		}
+
+		if issue.MessageID == "" {
+			editResultString += "\ni was unable to edit the original message for this issue, changes still applied"
+		}
+
+		_, _ = s.ChannelMessageSend(issue.ThreadID, fmt.Sprintf("<@%s> changed %s", i.User.ID, editResultString))
+
+		_, err = s.ChannelMessageEditEmbed(issue.ThreadID, issue.MessageID, issue.Embed())
+		if err != nil {
+			return err
 		}
 
 		return nil
