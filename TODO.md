@@ -11,8 +11,8 @@
 - [x] Change assignees with a slash command
   - [x] Register embed_message_id in the issues tabloe
 - [x] Register new roles
-- [ ] Delete/edit project
-  - [ ] Move to `project subcommand` structure
+- [x] Delete/edit project
+  - [x] Move to `project subcommand` structure
 - [ ] `list issues` which shows in current project
 - [ ] `list projects` which also shows completeness
 
