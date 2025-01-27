@@ -5,6 +5,7 @@ import (
 	"issues/db"
 	"issues/global"
 	"issues/slash"
+	"slices"
 	"strings"
 
 	dg "github.com/bwmarrin/discordgo"
@@ -25,6 +26,26 @@ var List = slash.Command{
 				Name:        "issues",
 				Description: "lists issues in current (or specified) project",
 				Options: []*dg.ApplicationCommandOption{
+					{
+						Type:        dg.ApplicationCommandOptionBoolean,
+						Name:        "me",
+						Description: "only show issues where i'm assigned",
+					},
+					{
+						Type:        dg.ApplicationCommandOptionBoolean,
+						Name:        "show_done",
+						Description: "shows done and cancelled issues too",
+					},
+					{
+						Type:        dg.ApplicationCommandOptionRole,
+						Name:        "priority",
+						Description: "only show issues that are of this priority",
+					},
+					{
+						Type:        dg.ApplicationCommandOptionRole,
+						Name:        "kind",
+						Description: "only show issues that are of this kind",
+					},
 					{
 						Type:        dg.ApplicationCommandOptionString,
 						Name:        "prefix",
@@ -62,6 +83,37 @@ var List = slash.Command{
 		case "issues":
 			prefixOption, ok := options["prefix"]
 
+			filterMe := false
+			{
+				meOption, meOk := options["me"]
+				filterMe = meOk && meOption.BoolValue()
+			}
+			showDone := false
+			{
+				doneOption, doneOk := options["show_done"]
+				showDone = doneOk && doneOption.BoolValue()
+			}
+			var priorityFilter string
+			{
+				priorityOption, priorityOk := options["priority"]
+				if priorityOk {
+					priorityFilter = priorityOption.Value.(string)
+				}
+			}
+			var kindFilter string
+			{
+				kindOption, kindOk := options["kind"]
+				if kindOk {
+					kindFilter = kindOption.Value.(string)
+				}
+			}
+
+			var guild db.Guild
+			err := global.DB.First(&guild, "id = ?", i.GuildID).Error
+			if err != nil {
+				return err
+			}
+
 			var project db.Project
 			if ok {
 				prefix := strings.ToUpper(prefixOption.StringValue())
@@ -85,10 +137,41 @@ var List = slash.Command{
 				}
 			}
 
+			if filterMe {
+				fmt.Println(project.Issues)
+				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
+					ids := strings.Split(issue.AssigneeIDs, ",")
+					return !slices.Contains(ids, i.Member.User.ID)
+				})
+			}
+
+			if !showDone {
+				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
+					return issue.IssueStatus == db.IssueStatusCanceled || issue.IssueStatus == db.IssueStatusDone
+				})
+			}
+
+			if priorityFilter != "" {
+				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
+					return issue.PriorityRoleID != priorityFilter
+				})
+			}
+
+			if kindFilter != "" {
+				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
+					return issue.KindRoleID != kindFilter
+				})
+			}
+
 			issueStrings := make([]string, 4)
 
 			for _, issue := range project.Issues {
-				issueStrings[issue.IssueStatus] += fmt.Sprintf("- <#%s>\n", issue.ThreadID)
+				str := "- "
+				str += fmt.Sprintf("<#%s> ", issue.ThreadID)
+				if issue.PriorityRoleID != guild.DefaultPriorityRoleID {
+					str += fmt.Sprintf("<@&%s>", issue.PriorityRoleID)
+				}
+				issueStrings[issue.IssueStatus] += str + "\n"
 			}
 
 			for i := range issueStrings {
@@ -99,7 +182,10 @@ var List = slash.Command{
 				}
 			}
 
-			description := fmt.Sprintf("**Todo**\n%s\n**Doing**\n%s\n**Done**\n%s\n**Cancelled**\n%s", issueStrings[0], issueStrings[1], issueStrings[2], issueStrings[3])
+			description := fmt.Sprintf("**Todo**\n%s\n**Doing**\n%s", issueStrings[0], issueStrings[1])
+			if showDone {
+				description += fmt.Sprintf("\n**Done**\n%s\n**Cancelled**\n%s", issueStrings[2], issueStrings[3])
+			}
 
 			embed := dg.MessageEmbed{
 				Title:       fmt.Sprintf("Issues in project %s", project.Name),
