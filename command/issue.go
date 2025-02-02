@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"issues/autolist"
 	"issues/db"
 	"issues/global"
 	"issues/slash"
@@ -77,6 +78,8 @@ var Issue = slash.Command{
 		subcommand := i.ApplicationCommandData().Options[0]
 		options := slash.GetOptionMapRaw(subcommand.Options)
 
+		lastUpdate := ""
+
 		// get issue from current channel id
 		var issue db.Issue
 		err := global.DB.Preload("KindRole").Preload("PriorityRole").Find(&issue, "thread_id = ?", i.ChannelID).Error
@@ -113,6 +116,7 @@ var Issue = slash.Command{
 			}
 
 			editResultString = fmt.Sprintf("%s to <@&%s>", subcommand.Name, newRole.ID)
+			lastUpdate = fmt.Sprintf("switched %s of %s", subcommand.Name, issue.ID)
 
 		case "assign":
 			user := options["person"].UserValue(s)
@@ -121,12 +125,14 @@ var Issue = slash.Command{
 			if !slices.Contains(assigneeIDs, user.ID) { // need to add assignee
 				issue.AssigneeIDs += "," + user.ID
 				editResultString = fmt.Sprintf("assignees and added <@%s>", user.ID)
+				lastUpdate = fmt.Sprintf("assigned %s to %s by %s", user.Username, issue.ID, i.Member.User.Username)
 			} else { // need to remove assignee
 				assigneeIDs = slices.DeleteFunc(assigneeIDs, func(id string) bool {
 					return id == user.ID
 				})
 				issue.AssigneeIDs = strings.Join(assigneeIDs, ",")
 				editResultString = fmt.Sprintf("assignees and removed <@%s>", user.ID)
+				lastUpdate = fmt.Sprintf("unassigned %s from %s by %s", user.Username, issue.ID, i.Member.User.Username)
 			}
 
 		case "rename":
@@ -138,6 +144,7 @@ var Issue = slash.Command{
 				return err
 			}
 			editResultString = fmt.Sprintf("the name to %s", issue.Title)
+			lastUpdate = fmt.Sprintf("renamed %s by %s", issue.ID, i.Member.User.Username)
 		}
 
 		err = global.DB.Save(&issue).Error
@@ -160,6 +167,8 @@ var Issue = slash.Command{
 				Content: fmt.Sprintf("<@%s> changed %s", i.Member.User.ID, editResultString),
 			},
 		})
+
+		autolist.Update(nil, issue.ProjectID, nil, i.GuildID, s, lastUpdate)
 
 		return nil
 	},
