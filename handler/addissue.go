@@ -126,5 +126,5 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 
 	project.Issues = append(project.Issues, issue)
 
-	return autolist.Update(&project, "", &guild, "", s, fmt.Sprintf("added %s", issue.ID))
+	return autolist.Update(&project, "", &guild, "", s, fmt.Sprintf("added %s by %s", issue.ID, m.Author.Username))
 }

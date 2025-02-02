@@ -33,6 +33,11 @@ var List = slash.Command{
 					},
 					{
 						Type:        dg.ApplicationCommandOptionBoolean,
+						Name:        "no_ephemeral",
+						Description: "disables ephemeral so you can show the output to @everyone",
+					},
+					{
+						Type:        dg.ApplicationCommandOptionBoolean,
 						Name:        "show_done",
 						Description: "shows done and cancelled issues too",
 					},
@@ -93,6 +98,11 @@ var List = slash.Command{
 				doneOption, doneOk := options["show_done"]
 				showDone = doneOk && doneOption.BoolValue()
 			}
+			noEphemeral := false
+			{
+				ephOption, ephOk := options["no_ephemeral"]
+				showDone = ephOk && ephOption.BoolValue()
+			}
 			var priorityFilter string
 			{
 				priorityOption, priorityOk := options["priority"]
@@ -142,7 +152,7 @@ var List = slash.Command{
 			embedTitle := fmt.Sprintf("Issues for project %s", project.Name)
 			embed := autolist.Embed(embedTitle, guild.DefaultPriorityRoleID, filteredIssues, "")
 
-			return slash.ReplyWithEmbed(s, i, embed, false)
+			return slash.ReplyWithEmbed(s, i, embed, !noEphemeral)
 		}
 
 		return nil

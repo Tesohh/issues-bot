@@ -111,7 +111,7 @@ var Mark = slash.Command{
 			return err
 		}
 
-		err = autolist.Update(nil, issue.ProjectID, nil, i.GuildID, s, fmt.Sprintf("marked %s as %s", issue.ID, db.IssueStatusNames[issueStatus]))
+		err = autolist.Update(nil, issue.ProjectID, nil, i.GuildID, s, fmt.Sprintf("marked %s as %s by %s", issue.ID, db.IssueStatusNames[issueStatus], i.Member.User.Username))
 		if err != nil {
 			return err
 		}
