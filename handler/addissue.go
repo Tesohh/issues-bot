@@ -19,9 +19,13 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 		return err
 	}
 
+	if currentChannel.IsThread() {
+		return nil
+	}
+
 	// get project from channelid or parent channelid
 	var project db.Project
-	result := global.DB.First(&project, "issue_channel_id = ? or issue_channel_id = ?", m.ChannelID, currentChannel.ParentID)
+	result := global.DB.First(&project, "issue_channel_id = ?", m.ChannelID)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return ErrNotInProject
@@ -42,6 +46,16 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 	issueID := fmt.Sprintf("#%s-%d", project.Prefix, count+1)
 	threadName := fmt.Sprintf("%s %s %s", issueID, db.IssueStatusIcons[0], title)
 	thread, err := s.ThreadStart(ch.ID, threadName, dg.ChannelTypeGuildPublicThread, 10080)
+	if err != nil {
+		return err
+	}
+
+	err = s.ChannelMessageDelete(ch.ID, m.ID)
+	if err != nil {
+		return err
+	}
+
+	err = s.ChannelMessageDelete(ch.ID, thread.ID)
 	if err != nil {
 		return err
 	}

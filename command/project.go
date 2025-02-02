@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"fmt"
+	"issues/autolist"
 	"issues/db"
 	"issues/global"
 	"issues/slash"
@@ -80,6 +81,21 @@ var Project = slash.Command{
 					},
 				},
 			},
+			{
+				Type:        dg.ApplicationCommandOptionSubCommand,
+				Name:        "resetlistmsg",
+				Description: "in case shit hits the fan, you can reset the list message by sending a new one",
+				Options: []*dg.ApplicationCommandOption{
+					{
+						Type:        dg.ApplicationCommandOptionString,
+						Name:        "prefix",
+						Description: "the project's prefix (eg. ISU, PLB, PYC)",
+						Required:    true,
+						MinLength:   slash.Ptr(3),
+						MaxLength:   3,
+					},
+				},
+			},
 		},
 	},
 	Func: func(s *dg.Session, i *dg.Interaction) error {
@@ -111,6 +127,13 @@ var Project = slash.Command{
 				return err
 			}
 
+			// TODO: Send the AutoList message and set id
+			embedTitle := fmt.Sprintf("AutoList™️ for %s", name)
+			alMsg, err := s.ChannelMessageSendEmbed(issuesChannel.ID, slash.Ptr(autolist.Embed(embedTitle, "", []db.Issue{})))
+			if err != nil {
+				return err
+			}
+
 			project := db.Project{
 				ID:                fmt.Sprintf("%s%s", prefix, i.GuildID),
 				Name:              name,
@@ -118,6 +141,7 @@ var Project = slash.Command{
 				RepoLink:          "",
 				CategoryChannelID: category.ID,
 				IssueChannelID:    issuesChannel.ID,
+				AutoListMessageID: alMsg.ID,
 				GuildID:           i.GuildID,
 			}
 
@@ -184,8 +208,12 @@ var Project = slash.Command{
 			return slash.ReplyWithEmbed(s, i, dg.MessageEmbed{
 				Title: fmt.Sprintf("Project %s deleted", project.Name),
 			}, false)
+
+		case "resetlistmsg":
+			// TODO: Resend AutoList
 		}
 
 		return nil
+
 	},
 }

@@ -2,10 +2,10 @@ package command
 
 import (
 	"fmt"
+	"issues/autolist"
 	"issues/db"
 	"issues/global"
 	"issues/slash"
-	"slices"
 	"strings"
 
 	dg "github.com/bwmarrin/discordgo"
@@ -137,60 +137,11 @@ var List = slash.Command{
 				}
 			}
 
-			if filterMe {
-				fmt.Println(project.Issues)
-				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
-					ids := strings.Split(issue.AssigneeIDs, ",")
-					return !slices.Contains(ids, i.Member.User.ID)
-				})
-			}
+			filteredIssues := autolist.ApplyFilters(project.Issues, filterMe, i.Member.User.ID, showDone, priorityFilter, kindFilter)
 
-			if !showDone {
-				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
-					return issue.IssueStatus == db.IssueStatusCanceled || issue.IssueStatus == db.IssueStatusDone
-				})
-			}
+			embedTitle := fmt.Sprintf("Issues for project %s", project.Name)
+			embed := autolist.Embed(embedTitle, guild.DefaultPriorityRoleID, filteredIssues)
 
-			if priorityFilter != "" {
-				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
-					return issue.PriorityRoleID != priorityFilter
-				})
-			}
-
-			if kindFilter != "" {
-				project.Issues = slices.DeleteFunc(project.Issues, func(issue db.Issue) bool {
-					return issue.KindRoleID != kindFilter
-				})
-			}
-
-			issueStrings := make([]string, 4)
-
-			for _, issue := range project.Issues {
-				str := "- "
-				str += fmt.Sprintf("<#%s> ", issue.ThreadID)
-				if issue.PriorityRoleID != guild.DefaultPriorityRoleID {
-					str += fmt.Sprintf("<@&%s>", issue.PriorityRoleID)
-				}
-				issueStrings[issue.IssueStatus] += str + "\n"
-			}
-
-			for i := range issueStrings {
-				if issueStrings[i] == "" {
-					issueStrings[i] = "nothing here..."
-				} else {
-					issueStrings[i] = strings.TrimRight(issueStrings[i], "\n")
-				}
-			}
-
-			description := fmt.Sprintf("**Todo**\n%s\n**Doing**\n%s", issueStrings[0], issueStrings[1])
-			if showDone {
-				description += fmt.Sprintf("\n**Done**\n%s\n**Cancelled**\n%s", issueStrings[2], issueStrings[3])
-			}
-
-			embed := dg.MessageEmbed{
-				Title:       fmt.Sprintf("Issues in project %s", project.Name),
-				Description: description,
-			}
 			return slash.ReplyWithEmbed(s, i, embed, false)
 		}
 

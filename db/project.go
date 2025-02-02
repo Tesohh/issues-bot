@@ -8,6 +8,7 @@ type Project struct {
 
 	CategoryChannelID string
 	IssueChannelID    string `gorm:"size:3"`
+	AutoListMessageID string
 	GuildID           string
 
 	Issues []Issue
