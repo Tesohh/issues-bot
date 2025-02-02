@@ -140,7 +140,7 @@ var List = slash.Command{
 			filteredIssues := autolist.ApplyFilters(project.Issues, filterMe, i.Member.User.ID, showDone, priorityFilter, kindFilter)
 
 			embedTitle := fmt.Sprintf("Issues for project %s", project.Name)
-			embed := autolist.Embed(embedTitle, guild.DefaultPriorityRoleID, filteredIssues)
+			embed := autolist.Embed(embedTitle, guild.DefaultPriorityRoleID, filteredIssues, "")
 
 			return slash.ReplyWithEmbed(s, i, embed, false)
 		}

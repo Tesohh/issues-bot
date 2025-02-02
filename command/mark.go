@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"issues/autolist"
 	"issues/db"
 	"issues/global"
 	"issues/slash"
@@ -105,6 +106,16 @@ var Mark = slash.Command{
 			Color: db.IssueStatusColors[issueStatus],
 		}
 
-		return slash.ReplyWithEmbed(s, i, embed, false)
+		err = slash.ReplyWithEmbed(s, i, embed, false)
+		if err != nil {
+			return err
+		}
+
+		err = autolist.Update(nil, issue.ProjectID, nil, i.GuildID, s, fmt.Sprintf("marked %s as %s", issue.ID, db.IssueStatusNames[issueStatus]))
+		if err != nil {
+			return err
+		}
+
+		return nil
 	},
 }

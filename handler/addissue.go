@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"issues/autolist"
 	"issues/db"
 	"issues/global"
 	"issues/slash"
@@ -25,7 +26,7 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 
 	// get project from channelid or parent channelid
 	var project db.Project
-	result := global.DB.First(&project, "issue_channel_id = ?", m.ChannelID)
+	result := global.DB.Preload("Issues").First(&project, "issue_channel_id = ?", m.ChannelID)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return ErrNotInProject
@@ -113,5 +114,17 @@ func AddIssue(s *dg.Session, m *dg.MessageCreate, roleIDs, channelIDs, userIDs [
 		return err
 	}
 
-	return nil
+	if project.AutoListMessageID == "" {
+		return ErrProjectHasNoAutolist
+	}
+
+	var guild db.Guild
+	err = global.DB.First(&guild, "id = ?", m.GuildID).Error
+	if err != nil {
+		return err
+	}
+
+	project.Issues = append(project.Issues, issue)
+
+	return autolist.Update(&project, "", &guild, "", s, fmt.Sprintf("added %s", issue.ID))
 }

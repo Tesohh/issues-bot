@@ -83,7 +83,7 @@ var Project = slash.Command{
 			},
 			{
 				Type:        dg.ApplicationCommandOptionSubCommand,
-				Name:        "resetlistmsg",
+				Name:        "resendautolist",
 				Description: "in case shit hits the fan, you can reset the list message by sending a new one",
 				Options: []*dg.ApplicationCommandOption{
 					{
@@ -127,9 +127,8 @@ var Project = slash.Command{
 				return err
 			}
 
-			// TODO: Send the AutoList message and set id
 			embedTitle := fmt.Sprintf("AutoList™️ for %s", name)
-			alMsg, err := s.ChannelMessageSendEmbed(issuesChannel.ID, slash.Ptr(autolist.Embed(embedTitle, "", []db.Issue{})))
+			alMsg, err := s.ChannelMessageSendEmbed(issuesChannel.ID, slash.Ptr(autolist.Embed(embedTitle, "", []db.Issue{}, "")))
 			if err != nil {
 				return err
 			}
@@ -209,8 +208,25 @@ var Project = slash.Command{
 				Title: fmt.Sprintf("Project %s deleted", project.Name),
 			}, false)
 
-		case "resetlistmsg":
-			// TODO: Resend AutoList
+		case "resendautolist":
+			var guild db.Guild
+			err := global.DB.First(&guild, "id = ?", i.GuildID).Error
+			if err != nil {
+				return err
+			}
+
+			embedTitle := fmt.Sprintf("AutoList™️ for %s", project.Name)
+			filteredIssues := autolist.ApplyFilters(project.Issues, false, "", false, "", "")
+
+			embed := autolist.Embed(embedTitle, guild.DefaultPriorityRoleID, filteredIssues, "")
+
+			alMsg, err := s.ChannelMessageSendEmbed(project.IssueChannelID, &embed)
+			if err != nil {
+				return err
+			}
+
+			project.AutoListMessageID = alMsg.ID
+			global.DB.Save(project)
 		}
 
 		return nil

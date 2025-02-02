@@ -9,7 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func Embed(title string, defaultPriorityRoleID string, issues []db.Issue) discordgo.MessageEmbed {
+func Embed(title string, defaultPriorityRoleID string, issues []db.Issue, lastUpdate string) discordgo.MessageEmbed {
 	issueStrings := make([]string, 4)
 
 	for _, issue := range issues {
@@ -43,9 +43,17 @@ func Embed(title string, defaultPriorityRoleID string, issues []db.Issue) discor
 		description = "There are no issues here. Get to work!"
 	}
 
+	footer := ""
+	if lastUpdate != "" {
+		footer = fmt.Sprintf("Last update: %s", lastUpdate)
+	}
+
 	embed := discordgo.MessageEmbed{
 		Title:       title,
 		Description: description,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: footer,
+		},
 	}
 
 	return slash.StandardizeEmbed(embed)
