@@ -6,6 +6,7 @@ import (
 	"issues/slash"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,18 +18,21 @@ var commands = map[string]*slash.Command{
 	"list":         &command.List,
 	"registerrole": &command.RegisterRole,
 }
-var registeredCommands = make([]*discordgo.ApplicationCommand, 0)
+var registeredCommands = make(map[string][]*discordgo.ApplicationCommand, 0)
 
 func registerCommands(session *discordgo.Session) error {
 	log.Println("Adding commands...")
-	guildid := os.Getenv("DISCORD_GUILD_ID")
+	guildids := strings.Split(os.Getenv("DISCORD_GUILD_ID"), ",")
 
-	for _, c := range commands {
-		cmd, err := session.ApplicationCommandCreate(session.State.User.ID, guildid, &c.ApplicationCommand)
-		if err != nil {
-			return fmt.Errorf("Cannot create %s due to %s", c.Name, err.Error())
+	for _, id := range guildids {
+		registeredCommands[id] = make([]*discordgo.ApplicationCommand, 0)
+		for _, c := range commands {
+			cmd, err := session.ApplicationCommandCreate(session.State.User.ID, id, &c.ApplicationCommand)
+			if err != nil {
+				return fmt.Errorf("Cannot create %s due to %s", c.Name, err.Error())
+			}
+			registeredCommands[id] = append(registeredCommands[id], cmd)
 		}
-		registeredCommands = append(registeredCommands, cmd)
 	}
 
 	log.Println("Added commands")

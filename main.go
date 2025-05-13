@@ -79,10 +79,12 @@ func main() {
 		// 	log.Fatalf("Could not fetch registered commands: %v", err)
 		// }
 
-		for _, v := range registeredCommands {
-			err := session.ApplicationCommandDelete(session.State.User.ID, os.Getenv("DISCORD_GUILD_ID"), v.ID)
-			if err != nil {
-				slog.Error("Cannot delete '%v' command: %v", v.Name, err.Error())
+		for id, cmds := range registeredCommands {
+			for _, cmd := range cmds {
+				err := session.ApplicationCommandDelete(session.State.User.ID, id, cmd.ID)
+				if err != nil {
+					slog.Error("Cannot delete '%v' command: %v", cmd.Name, err.Error())
+				}
 			}
 		}
 	}
